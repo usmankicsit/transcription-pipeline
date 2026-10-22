@@ -14,6 +14,8 @@ transcribe-api
 
 Then open http://127.0.0.1:8000. When this process is running, the page calls the Python service. The public demo runs Whisper in the browser instead, so a reviewer can try it with no install. The Python package remains the production path: ffmpeg, long-file checkpoints, and the HTTP API.
 
+Live demo: https://transcription-pipeline.vercel.app
+
 Source: https://github.com/usmankicsit/transcription-pipeline
 
 ## What you need
