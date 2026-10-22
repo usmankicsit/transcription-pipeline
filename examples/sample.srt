@@ -1,0 +1,7 @@
+1
+00:00:00,000 --> 00:00:03,020
+This is a short sample for the transcription pipeline.
+
+2
+00:00:03,720 --> 00:00:06,460
+The words should come back as text with timestamps.

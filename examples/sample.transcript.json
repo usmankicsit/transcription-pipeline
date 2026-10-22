@@ -1,0 +1,113 @@
+{
+  "language": "en",
+  "duration": 6.84,
+  "text": "This is a short sample for the transcription pipeline. The words should come back as text with timestamps.",
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 3.04,
+      "text": "This is a short sample for the transcription pipeline.",
+      "words": [
+        {
+          "start": 0.0,
+          "end": 0.3,
+          "text": "This"
+        },
+        {
+          "start": 0.3,
+          "end": 0.54,
+          "text": "is"
+        },
+        {
+          "start": 0.54,
+          "end": 0.68,
+          "text": "a"
+        },
+        {
+          "start": 0.68,
+          "end": 0.9,
+          "text": "short"
+        },
+        {
+          "start": 0.9,
+          "end": 1.28,
+          "text": "sample"
+        },
+        {
+          "start": 1.28,
+          "end": 1.62,
+          "text": "for"
+        },
+        {
+          "start": 1.62,
+          "end": 1.86,
+          "text": "the"
+        },
+        {
+          "start": 1.86,
+          "end": 2.34,
+          "text": "transcription"
+        },
+        {
+          "start": 2.34,
+          "end": 3.04,
+          "text": "pipeline."
+        }
+      ]
+    },
+    {
+      "start": 3.72,
+      "end": 6.48,
+      "text": "The words should come back as text with timestamps.",
+      "words": [
+        {
+          "start": 3.72,
+          "end": 3.94,
+          "text": "The"
+        },
+        {
+          "start": 3.94,
+          "end": 4.26,
+          "text": "words"
+        },
+        {
+          "start": 4.26,
+          "end": 4.56,
+          "text": "should"
+        },
+        {
+          "start": 4.56,
+          "end": 4.82,
+          "text": "come"
+        },
+        {
+          "start": 4.82,
+          "end": 5.16,
+          "text": "back"
+        },
+        {
+          "start": 5.16,
+          "end": 5.38,
+          "text": "as"
+        },
+        {
+          "start": 5.38,
+          "end": 5.7,
+          "text": "text"
+        },
+        {
+          "start": 5.7,
+          "end": 6.02,
+          "text": "with"
+        },
+        {
+          "start": 6.02,
+          "end": 6.48,
+          "text": "timestamps."
+        }
+      ]
+    }
+  ],
+  "source_format": "mp3",
+  "source_codec": "mp3"
+}

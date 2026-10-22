@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cue — timestamped transcription</title>
+  <meta name="description" content="Upload speech. Get the text back with a start and end time on every segment.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,640&family=Outfit:wght@380;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/">
+      <span class="mark" aria-hidden="true">C</span>
+      <span>
+        <strong>Cue</strong>
+        <small>Timestamped transcription</small>
+      </span>
+    </a>
+    <nav>
+      <a href="https://github.com/usmankicsit/transcription-pipeline">Source</a>
+      <a href="https://github.com/usmankicsit/transcription-pipeline#how-to-test">How to test</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Audio in. Segment times out.</p>
+      <h1>Speech, with the clock still attached.</h1>
+      <p class="lede">Drop a WAV or MP3. Cue returns the words and the start and end of every phrase, ready for captions, search, or the next system in line.</p>
+    </section>
+
+    <section class="desk">
+      <div class="intake">
+        <label id="drop" class="drop" for="file">
+          <input id="file" name="file" type="file" accept="audio/*,video/*,.wav,.mp3,.m4a,.flac,.ogg,.webm">
+          <span class="drop-kicker">Audio file</span>
+          <span class="drop-title" id="file-label">Drop a recording, or choose a file</span>
+          <span class="drop-note">WAV, MP3, M4A, FLAC, OGG. A wrong extension is fine.</span>
+        </label>
+
+        <div class="row">
+          <label class="field">
+            <span>Language</span>
+            <input id="language" type="text" inputmode="text" placeholder="en" maxlength="12" autocomplete="off">
+          </label>
+          <button id="sample" class="ghost" type="button">Use the spoken sample</button>
+          <button id="go" class="solid" type="button">Transcribe</button>
+        </div>
+        <p id="status" class="status" role="status"></p>
+        <p id="engine" class="engine"></p>
+      </div>
+
+      <aside class="rail">
+        <h2>What the pipeline does</h2>
+        <ol>
+          <li>
+            <strong>Accept</strong>
+            <span>A file upload or a path. The name is not trusted. The bytes are.</span>
+          </li>
+          <li>
+            <strong>Decode</strong>
+            <span>ffmpeg turns every container into 16 kHz mono PCM. The model sees one format.</span>
+          </li>
+          <li>
+            <strong>Cut</strong>
+            <span>Long audio is split on silence, about every five minutes. A hard cut overlaps by two seconds.</span>
+          </li>
+          <li>
+            <strong>Transcribe</strong>
+            <span>Whisper reads one chunk at a time. Times are shifted back onto the original clock.</span>
+          </li>
+        </ol>
+      </aside>
+    </section>
+
+    <section id="result" class="result" hidden>
+      <div class="result-bar">
+        <div>
+          <p class="eyebrow" id="meta"></p>
+          <h2 id="full-text"></h2>
+        </div>
+        <div class="exports" role="group" aria-label="Download the transcript">
+          <button type="button" data-format="json">JSON</button>
+          <button type="button" data-format="srt">SRT</button>
+          <button type="button" data-format="vtt">VTT</button>
+          <button type="button" data-format="txt">Text</button>
+        </div>
+      </div>
+      <audio id="player" controls></audio>
+      <div id="timeline" class="timeline" aria-hidden="true"></div>
+      <ol id="segments" class="segments"></ol>
+    </section>
+  </main>
+
+  <footer>
+    <p>The production service is the Python package in the repository: faster-whisper, ffmpeg, checkpoints, and an HTTP API. This page calls that service when it is running. On the public demo it runs Whisper in the browser, because a serverless host cannot hold the model and a long job.</p>
+  </footer>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
