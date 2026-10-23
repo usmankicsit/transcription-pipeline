@@ -3,6 +3,7 @@ import time
 from fastapi.testclient import TestClient
 
 from transcription_pipeline.api import create_app
+from transcription_pipeline.errors import AudioError
 from transcription_pipeline.schemas import Segment, Transcript, Word
 from transcription_pipeline.settings import Settings
 
@@ -23,6 +24,17 @@ def _transcript() -> Transcript:
         source_format="wav",
         source_codec="pcm_s16le",
     )
+
+
+class FlakyPipeline:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def run(self, source, *, language=None, job_dir=None, stream_index=0):
+        self.calls += 1
+        if self.calls == 1:
+            raise AudioError("decode failed")
+        return _transcript()
 
 
 class StubPipeline:
@@ -129,6 +141,43 @@ def test_unknown_job_is_not_found(tmp_path):
     client, _app = _client(tmp_path)
     assert client.get("/v1/transcriptions/" + ("a" * 32)).status_code == 404
     assert client.get("/v1/transcriptions/nope").status_code == 404
+
+
+def _wait_for(client, job_id: str) -> dict:
+    body = {}
+    for _ in range(50):
+        body = client.get(f"/v1/transcriptions/{job_id}").json()
+        if body["status"] in {"succeeded", "failed"}:
+            return body
+        time.sleep(0.05)
+    return body
+
+
+def test_two_uploads_stay_isolated(tmp_path):
+    client, _app = _client(tmp_path, pipeline=StubPipeline(delay=0.2), duration=3600)
+    first = client.post("/v1/transcriptions", files={"file": ("a.mp3", b"one", "audio/mpeg")})
+    second = client.post("/v1/transcriptions", files={"file": ("b.wav", b"two", "audio/wav")})
+    assert first.status_code == 202
+    assert second.status_code == 202
+    assert first.json()["id"] != second.json()["id"]
+    assert _wait_for(client, first.json()["id"])["status"] == "succeeded"
+    assert _wait_for(client, second.json()["id"])["status"] == "succeeded"
+
+
+def test_failed_job_retries_without_a_new_upload(tmp_path):
+    pipeline = FlakyPipeline()
+    client, _app = _client(tmp_path, pipeline=pipeline, duration=3600)
+    created = client.post(
+        "/v1/transcriptions",
+        files={"file": ("note.wav", b"RIFFdemo", "audio/wav")},
+        data={"async_job": "true"},
+    )
+    job_id = created.json()["id"]
+    assert _wait_for(client, job_id)["status"] == "failed"
+    retry = client.post(f"/v1/transcriptions/{job_id}/retry")
+    assert retry.status_code == 202
+    assert _wait_for(client, job_id)["status"] == "succeeded"
+    assert pipeline.calls == 2
 
 
 def test_explicit_async_flag(tmp_path):

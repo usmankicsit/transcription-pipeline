@@ -120,6 +120,41 @@ transcribe meeting.mp3 --job-dir ./work/meeting -o meeting.json
 | `src/transcription_pipeline/export.py` | JSON, plain text, SRT, WebVTT. |
 | `tests/` | What a reviewer can run with `pytest`. |
 
+## Design decisions
+
+These are the decisions behind the service. The same text is what the Part 2 questions are asking for.
+
+### Concurrent uploads
+
+Each upload is saved under its own id, `work/<job-id>/source.<ext>`, so two requests never write the same path. The original filename is only used to pick a suffix. Job status lives in a dictionary guarded by a lock. Transcription does not run on the request thread: a short file is handed to a worker thread, and a long file returns `202` immediately while its own thread runs. A test posts two files at once and checks that they finish as two different jobs.
+
+That is the right shape, and it is not the production ceiling. A production deployment puts a fixed number of workers behind a queue. When the queue is full, the API returns `429` instead of starting another model. The job contract does not change.
+
+### Storage
+
+Audio and the transcript are different kinds of data. The audio is a blob. The transcript is a small JSON document with segments. In this service the blob is the uploaded file on local disk, and the transcript is the JSON returned by the API or written next to the chunk checkpoints. A finished short request deletes its working directory. A long job keeps the audio so a retry can run again, and it keeps one JSON checkpoint per finished chunk.
+
+In production the audio goes to object storage with a lifecycle rule, and the job row goes to a database: id, status, object key, language, error, and the transcript JSON. The database is the source of truth for status. The object store is the source of truth for bytes. Local disk is only the scratch space for the chunk being transcribed.
+
+### Retry and recovery
+
+A failed chunk does not discard chunks that already succeeded. Each chunk writes `chunk-0000.json` before its wav slice is deleted. Running the same job again skips those files. The plan is hashed with the file size, the modification time, and the chunk boundaries, so a different file or a different chunk size does not reuse stale checkpoints.
+
+On the API, `POST /v1/transcriptions/{id}/retry` is allowed only after a job has failed, and only if the audio is still on disk. The client does not upload the file again. From the CLI, the same thing is `--job-dir`. A test forces the first attempt to fail and checks that the retry succeeds on the second call.
+
+### API
+
+The service is a small HTTP API.
+
+| Call | Behavior |
+| --- | --- |
+| `POST /v1/transcriptions` | Multipart file. Returns the transcript, or `202` with a job id when the file is long or the client asks for a background job. |
+| `GET /v1/transcriptions/{id}` | `queued`, `running`, `succeeded`, or `failed`. |
+| `POST /v1/transcriptions/{id}/retry` | Runs a failed job again. |
+| `GET /health` | Process is up. |
+
+`response_format` is `json`, `txt`, `srt`, or `vtt`. `language` is an optional code such as `en`. A bad file is `400`. A file over the size cap is `413`. An unknown job is `404`.
+
 ## Assessment answers
 
 ### Accept an audio file
